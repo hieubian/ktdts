@@ -10,7 +10,7 @@ interface ProofViewerProps {
 }
 
 export const ProofViewer: React.FC<ProofViewerProps> = ({ steps, funcName = 'Y' }) => {
-  const [isOpen, setIsOpen] = useState<boolean>(false)
+  const [isOpen, setIsOpen] = useState<boolean>(true)
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null)
 
   const copyStepLatex = (latex: string, idx: number) => {
@@ -20,78 +20,87 @@ export const ProofViewer: React.FC<ProofViewerProps> = ({ steps, funcName = 'Y' 
   }
 
   const finalStep = steps[steps.length - 1]
-  const cascadeStep = steps.find(
-    (s) => (s.latex.includes('S_{12}') || s.latex.includes('P_{12}')) && s !== finalStep
-  )
 
   return (
-    <div className="proof-viewer-card">
-      <div className="proof-summary-box">
-        <div className="proof-summary-left">
-          <span className="summary-tag">Biểu thức sau biến đổi</span>
-          <div className="summary-math">
-            <KaTeXView math={finalStep ? finalStep.latex : `${funcName} = 0`} />
-          </div>
-          {cascadeStep && (
-            <div className="summary-cascade-sub">
-              <span className="summary-cascade-label">Hệ tín hiệu:</span>
-              <KaTeXView math={cascadeStep.latex} />
-            </div>
-          )}
+    <div>
+      {/* Summary result */}
+      <div className="result-box" style={{ marginTop: 0, marginBottom: 'var(--space-md)' }}>
+        <div className="result-label">
+          <span>Kết quả sau biến đổi:</span>
         </div>
-
-        <button
-          type="button"
-          className="steps-toggle-btn"
-          onClick={() => setIsOpen((prev) => !prev)}
-        >
-          {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          <span>{isOpen ? 'Thu gọn' : 'Xem các bước'}</span>
-        </button>
+        <div className="result-math">
+          <KaTeXView math={finalStep ? finalStep.latex : `${funcName} = 0`} block={true} />
+        </div>
       </div>
 
+      {/* Toggle */}
+      <button className="action-btn" onClick={() => setIsOpen(prev => !prev)}
+        style={{ marginBottom: 'var(--space-md)' }}>
+        {isOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+        <span>{isOpen ? 'Thu gọn các bước' : 'Xem chi tiết từng bước biến đổi'}</span>
+      </button>
+
       {isOpen && (
-        <div className="steps-detail-container">
-          <div className="proof-steps-container">
+        <>
+          {/* Laws reference */}
+          <div className="info-box" style={{ marginBottom: 'var(--space-md)', marginTop: 0 }}>
+            <HelpCircle size={16} />
+            <div>
+              <p><strong>Các định luật áp dụng:</strong></p>
+              <p style={{ marginTop: 4 }}>
+                1. <strong>Hoàn nguyên:</strong> <KaTeXView math="\overline{\overline{A}} = A" /> &nbsp;|&nbsp;
+                2. <strong>De Morgan:</strong> <KaTeXView math="\overline{A+B} = \overline{A}\cdot\overline{B}" /> và <KaTeXView math="\overline{A \cdot B} = \overline{A} + \overline{B}" />
+              </p>
+            </div>
+          </div>
+
+          {/* Steps */}
+          <div className="proof-steps">
             {steps.map((step, idx) => {
               const isCopied = copiedIdx === idx
+              const cleanTitle = step.title.replace(/^Bước\s+\d+[:.]?\s*/i, '')
 
               return (
-                <div key={idx} className="step-card">
-                  <div className="step-card-header">
-                    <div className="step-card-header-left">
-                      <div className="step-badge">Bước {idx + 1}</div>
-                      <h4 className="step-title">{step.title}</h4>
+                <div key={idx} className="proof-step">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                        width: 24, height: 24, borderRadius: '50%', background: 'var(--gradient-primary)',
+                        color: 'white', fontSize: '11px', fontWeight: 700, flexShrink: 0
+                      }}>{idx + 1}</span>
+                      <span className="proof-step-title">{cleanTitle}</span>
                     </div>
-                    <button
-                      type="button"
-                      className="step-copy-btn"
-                      onClick={() => copyStepLatex(step.latex, idx)}
-                      title="Sao chép LaTeX"
-                    >
-                      {isCopied ? (
-                        <Check className="w-3.5 h-3.5 text-emerald-600" />
-                      ) : (
-                        <Copy className="w-3.5 h-3.5 text-slate-400" />
-                      )}
-                      <span>{isCopied ? 'Đã sao chép' : 'Copy'}</span>
+                    <button className="action-btn" onClick={() => copyStepLatex(step.latex, idx)}
+                      style={{ fontSize: '10px', padding: '3px 8px' }}>
+                      {isCopied ? <Check size={12} /> : <Copy size={12} />}
+                      <span>{isCopied ? 'Đã copy' : 'LaTeX'}</span>
                     </button>
                   </div>
 
-                  {step.description && (
-                    <p className="step-description">
-                      <FormattedMathText text={step.description} />
-                    </p>
+                  {step.ruleName && (
+                    <div className="proof-step-rule">
+                      {step.ruleName}
+                      {step.ruleFormula && (
+                        <span style={{ marginLeft: 8 }}>
+                          <KaTeXView math={step.ruleFormula} />
+                        </span>
+                      )}
+                    </div>
                   )}
 
-                  <div className="step-math-box">
+                  <p className="proof-step-desc">
+                    <FormattedMathText text={step.description} />
+                  </p>
+
+                  <div className="proof-step-math">
                     <KaTeXView math={step.latex} block={true} />
                   </div>
                 </div>
               )
             })}
           </div>
-        </div>
+        </>
       )}
     </div>
   )

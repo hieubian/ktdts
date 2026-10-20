@@ -49,19 +49,19 @@ export function generateTransformations(
 
     return [
       {
-        title: 'Biểu thức tối thiểu',
-        description: `Từ bảng Karnaugh câu a: ${groups.map((g, i) => `$T_{${i + 1}}$ (${g.cells.join(', ')})`).join(', ')}.`,
-        ruleName: form === 'SOP' ? 'Chuẩn tắc Tuyển (SOP - Sum of Products)' : 'Chuẩn tắc Hội (POS - Product of Sums)',
-        ruleFormula: form === 'SOP' ? 'Y = T_1 + T_2 + \\cdots + T_k' : 'Y = M_1 \\cdot M_2 \\cdot \\cdots \\cdot M_k',
+        title: 'Xác định biểu thức tối thiểu ban đầu từ bìa Karnaugh',
+        description: `Từ kết quả khoanh các nhóm ô tối ưu trên bìa Karnaugh ở Câu a, ta thu được hàm logic ở dạng tối thiểu gồm ${groups.length} thành phần tương ứng với các nhóm ô: ${groups.map((g, i) => `$${form === 'SOP' ? `T_{${i + 1}}` : `M_{${i + 1}}`}$ (${g.cells.join(', ')})`).join(', ')}.`,
+        ruleName: form === 'SOP' ? 'Dạng chuẩn tắc Tuyển (SOP)' : 'Dạng chuẩn tắc Hội (POS)',
+        ruleFormula: form === 'SOP' ? 'Y = T_1 + T_2 + \\dots + T_k' : 'Y = M_1 \\cdot M_2 \\cdots M_k',
         latex: `${funcName} = ${expr}`
       },
       {
-        title: 'Mạch logic cơ bản',
+        title: 'Cấu trúc sơ đồ logic cơ bản (AND, OR, NOT)',
         description: form === 'SOP'
-          ? 'Tầng 1: AND. Tầng 2: OR. Biến đảo: NOT.'
-          : 'Tầng 1: OR. Tầng 2: AND. Biến đảo: NOT.',
-        ruleName: '',
-        ruleFormula: '',
+          ? 'Tầng 1 gồm các cổng AND để tạo các số hạng tích. Tầng 2 gồm 1 cổng OR để cộng toàn bộ các tích lại với nhau. Các biến đảo được lấy qua cổng NOT.'
+          : 'Tầng 1 gồm các cổng OR để tạo các thừa số tổng. Tầng 2 gồm 1 cổng AND để nhân toàn bộ các tổng lại với nhau. Các biến đảo được lấy qua cổng NOT.',
+        ruleName: 'Mạch logic 2 tầng cơ bản',
+        ruleFormula: form === 'SOP' ? 'Y = \\text{OR}(\\text{AND}_1, \\text{AND}_2, \\dots)' : 'Y = \\text{AND}(\\text{OR}_1, \\text{OR}_2, \\dots)',
         latex: `${funcName} = ${expr}`
       }
     ]
@@ -83,17 +83,17 @@ function transformSopDetailed(
   const termSymbols = groups.map((_, i) => `T_{${i + 1}}`)
 
   steps.push({
-    title: 'Biểu thức tối thiểu',
-    description: `Từ bảng Karnaugh câu a: ${groups.map((g, i) => `$T_{${i + 1}}$ (${g.cells.join(', ')})`).join(', ')}.`,
-    ruleName: 'Chuẩn tắc Tuyển (SOP - Sum of Products)',
-    ruleFormula: 'Y = T_1 + T_2 + \\cdots + T_k',
+    title: 'Xác định biểu thức tối thiểu ban đầu từ bìa Karnaugh',
+    description: `Từ kết quả khoanh các nhóm ô 1 và X trên bìa Karnaugh ở Câu a, ta thu được biểu thức dạng Chuẩn tắc Tuyển tối thiểu (SOP) gồm ${groups.length} số hạng tích tương ứng với các nhóm ô: ${groups.map((g, i) => `$T_{${i + 1}}$ (${g.cells.join(', ')})`).join(', ')}.`,
+    ruleName: 'Dạng chuẩn tắc tuyển (SOP)',
+    ruleFormula: 'Y = T_1 + T_2 + \\dots + T_k',
     latex: `${funcName} = ${initialSop}`
   })
 
   steps.push({
-    title: 'Phủ định kép toàn phần',
-    description: 'Áp dụng định luật hoàn nguyên.',
-    ruleName: 'Định luật hoàn nguyên',
+    title: 'Phủ định kép toàn phần (Áp dụng định luật hoàn nguyên)',
+    description: 'Để chuẩn bị chuyển đổi sang họ cổng đảo, nguyên tắc căn bản là tạo ra dấu gạch ngang trên đầu. Ta lấy phủ định 2 lần toàn bộ biểu thức hàm. Theo định luật hoàn nguyên, phủ định của phủ định bằng chính biểu thức ban đầu nên giá trị logic không đổi.',
+    ruleName: 'Định luật hoàn nguyên (Involution)',
     ruleFormula: '\\overline{\\overline{X}} = X',
     latex: `${funcName} = \\overline{\\overline{${funcName}}} = \\overline{\\overline{ ${initialSop} }}`
   })
@@ -105,18 +105,18 @@ function transformSopDetailed(
     })
 
     steps.push({
-      title: 'Phân phối dấu gạch ngang bằng định luật De Morgan',
-      description: 'Phép cộng chuyển thành phép nhân.',
-      ruleName: 'Định luật De Morgan',
-      ruleFormula: '\\overline{X_1 + X_2 + \\cdots + X_k} = \\overline{X_1} \\cdot \\overline{X_2} \\cdots \\overline{X_k}',
+      title: 'Phân phối dấu gạch dưới bằng định luật De Morgan',
+      description: 'Giữ nguyên dấu gạch phủ định ở tầng trên cùng. Áp dụng định luật De Morgan cho dấu gạch phủ định bên dưới: phép cộng (OR) giữa các số hạng được chuyển thành phép nhân (AND) giữa các số hạng có dấu gạch đảo.',
+      ruleName: 'Định luật De Morgan cho phép cộng',
+      ruleFormula: '\\overline{X_1 + X_2 + \\dots + X_k} = \\overline{X_1} \\cdot \\overline{X_2} \\cdots \\overline{X_k}',
       latex: `${funcName} = \\overline{ ${nandTerms.join(' \\cdot ')} }`
     })
 
     steps.push({
-      title: 'Cấu trúc mạch NAND nhiều đầu vào',
-      description: `Tầng 1: ${groups.length} cổng NAND nhiều đầu vào. Tầng 2: 1 cổng NAND ${groups.length} đầu vào.`,
-      ruleName: '',
-      ruleFormula: '',
+      title: 'Kết luận cấu trúc sơ đồ toàn cổng NAND N đầu vào',
+      description: `Mỗi thành phần số hạng đảo được thực hiện bởi 1 cổng NAND N đầu vào ở tầng 1. Tầng 2 gồm đúng 1 cổng NAND có ${groups.length} đầu vào nhận các tín hiệu tầng 1 để thu gom ra kết quả $Y$.`,
+      ruleName: 'Mạch logic 2 tầng toàn NAND',
+      ruleFormula: 'Y = \\text{NAND}(\\overline{T_1}, \\overline{T_2}, \\dots)',
       latex: `${funcName} = \\overline{ ${nandTerms.join(' \\cdot ')} }`
     })
     return steps
@@ -129,14 +129,14 @@ function transformSopDetailed(
     })
 
     steps.push({
-      title: 'De Morgan',
-      description: 'Chuyển cộng thành nhân.',
+      title: 'Phân phối dấu gạch dưới bằng định luật De Morgan',
+      description: 'Giữ nguyên dấu gạch phủ định trên cùng. Dấu gạch phủ định phía dưới được phân phối vào từng số hạng tích, biến phép cộng thành tích các thừa số có dấu gạch ngang trên đầu.',
       ruleName: 'Định luật De Morgan',
-      ruleFormula: '\\overline{T_1 + T_2 + \\cdots} = \\overline{T_1} \\cdot \\overline{T_2} \\cdots',
+      ruleFormula: '\\overline{T_1 + T_2 + \\dots} = \\overline{T_1} \\cdot \\overline{T_2} \\cdots',
       latex: `${funcName} = \\overline{ ${stage1Terms.join(' \\cdot ')} }`
     })
 
-    const decomposedTerms: { original: string; latex: string; uLabel: string; literalsCount: number }[] = []
+    const decomposedTerms: { original: string; latex: string; uLabel: string; literalsCount: number; explanation: string }[] = []
     let hasMultiLiteral = false
 
     groups.forEach((g, idx) => {
@@ -149,7 +149,8 @@ function transformSopDetailed(
           original: orig,
           latex: orig,
           uLabel,
-          literalsCount: litCount
+          literalsCount: litCount,
+          explanation: `Số hạng $U_{${idx + 1}}$ có ${litCount} biến, được nối trực tiếp vào 1 cổng NAND 2 đầu vào.`
         })
       } else if (litCount === 3) {
         hasMultiLiteral = true
@@ -162,7 +163,8 @@ function transformSopDetailed(
           original: orig,
           latex: decomp,
           uLabel,
-          literalsCount: litCount
+          literalsCount: litCount,
+          explanation: `Số hạng $U_{${idx + 1}}$ có 3 biến: đưa 2 biến đầu ($${l0}$, $${l1}$) vào cổng NAND-2 thứ nhất thu được tín hiệu đảo; qua cổng NAND chập chân làm cổng đảo để lấy lại tích thường; rồi đưa cùng biến thứ ba $${l2}$ vào cổng NAND-2 thứ hai.`
         })
       } else {
         hasMultiLiteral = true
@@ -177,7 +179,8 @@ function transformSopDetailed(
           original: orig,
           latex: decomp,
           uLabel,
-          literalsCount: litCount
+          literalsCount: litCount,
+          explanation: `Số hạng $U_{${idx + 1}}$ có 4 biến: chia thành 2 nhánh qua 2 cổng NAND-2 và 2 cổng đảo chập chân, sau đó đưa 2 ngõ ra vào cổng NAND-2 kết hợp.`
         })
       }
     })
@@ -185,68 +188,68 @@ function transformSopDetailed(
     if (hasMultiLiteral) {
       const multiItems = decomposedTerms.filter((d) => d.literalsCount > 2)
       steps.push({
-        title: 'Tách số hạng nhiều biến',
-        description: 'Phân tích số hạng ≥3 biến về NAND 2 đầu vào.',
-        ruleName: '',
+        title: 'Tách các số hạng có từ 3 biến trở lên về cổng NAND 2 đầu vào',
+        description: multiItems.map((m) => m.explanation).join(' '),
+        ruleName: 'Phân tích tích nhiều biến bằng cổng NAND 2 đầu vào',
         ruleFormula: '\\overline{A \\cdot B \\cdot C} = \\overline{ \\overline{\\overline{A \\cdot B}} \\cdot C }',
-        latex: multiItems.map((m) => `${m.original} = ${m.latex}`).join(' \\quad ; \\quad ')
+        latex: multiItems.map((m) => `${m.original} = ${m.latex}`).join(' \\quad , \\quad ')
       })
     }
 
     steps.push({
-      title: 'Tín hiệu tầng 1',
-      description: `${decomposedTerms.map((d) => `$${d.uLabel} = ${d.latex}$`).join(' ; ')}.`,
-      ruleName: '',
-      ruleFormula: '',
-      latex: decomposedTerms.map((d) => `${d.uLabel} = ${d.latex}`).join(' \\quad ; \\quad ')
+      title: 'Xác định các tín hiệu ngõ ra tầng 1 (Tín hiệu số hạng đảo)',
+      description: `Sau tầng 1, toàn bộ các số hạng đã được tạo thành công dưới dạng tín hiệu đảo $U_i$ bằng các cổng NAND 2 đầu vào và cổng đảo: ${decomposedTerms.map((d) => `$${d.uLabel} = ${d.latex}$`).join(' ; ')}.`,
+      ruleName: 'Tín hiệu tầng 1',
+      ruleFormula: 'U_i = \\overline{T_i}',
+      latex: decomposedTerms.map((d) => `${d.uLabel} = ${d.latex}`).join(' \\quad , \\quad ')
     })
 
     if (decomposedTerms.length === 1) {
       steps.push({
-        title: 'Ngõ ra',
-        description: '1 số hạng: qua cổng đảo.',
-        ruleName: '',
-        ruleFormula: '',
+        title: 'Biểu thức ngõ ra cuối cùng',
+        description: 'Vì hàm chỉ có 1 số hạng tích $T_1$, ta lấy $U_1$ qua 1 cổng NAND chập chân (cổng đảo) để thu được $Y = T_1$.',
+        ruleName: 'Cổng đảo ngõ ra đơn',
+        ruleFormula: `${funcName} = \\overline{U_1} = T_1`,
         latex: `${funcName} = \\overline{${decomposedTerms[0].latex}}`
       })
     } else if (decomposedTerms.length === 2) {
       steps.push({
-        title: 'Tầng 2',
-        description: '2 số hạng: 1 cổng NAND 2 đầu vào.',
-        ruleName: '',
-        ruleFormula: '',
+        title: 'Ghép tầng thu gom ngõ ra chỉ sử dụng cổng NAND 2 đầu vào',
+        description: 'Hai tín hiệu ngõ ra tầng 1 là $U_1$ và $U_2$ được đưa trực tiếp vào 1 cổng NAND 2 đầu vào. Theo định lý De Morgan: cổng này thực hiện phép cộng (OR) giữa 2 số hạng, cho ra $Y = T_1 + T_2$.',
+        ruleName: 'Gom 2 số hạng bằng 1 cổng NAND 2 đầu vào',
+        ruleFormula: 'Y = \\overline{ U_1 \\cdot U_2 } = T_1 + T_2',
         latex: `${funcName} = \\overline{ ${decomposedTerms[0].latex} \\cdot ${decomposedTerms[1].latex} }`
       })
     } else if (decomposedTerms.length === 3) {
       steps.push({
-        title: 'Phân tầng cascade',
-        description: '3 số hạng: ghép tuần tự.',
-        ruleName: '',
-        ruleFormula: '',
-        latex: `${funcName} = \\overline{ \\overline{S_{12}} \\cdot U_3 } \\quad ; \\quad S_{12} = \\overline{ U_1 \\cdot U_2 }`
+        title: 'Ghép tầng thu gom ngõ ra theo hệ tín hiệu trung gian',
+        description: 'Vì ngõ ra cần gom 3 số hạng mà mỗi cổng chỉ có 2 ngõ vào, ta thực hiện phân tầng tuần tự: gom 2 số hạng đầu $U_1$ và $U_2$ qua cổng NAND thứ nhất tạo tổng $S_{12} = T_1 + T_2$; đảo $S_{12}$ qua cổng NAND chập chân thành $\\overline{S_{12}}$; rồi đưa $\\overline{S_{12}}$ cùng $U_3$ vào cổng NAND ngõ ra để thu được $Y = T_1 + T_2 + T_3$.',
+        ruleName: 'Ghép tầng tuần tự 3 số hạng (Cascade)',
+        ruleFormula: 'Y = \\overline{ \\overline{S_{12}} \\cdot U_3 } \\quad , \\quad S_{12} = \\overline{ U_1 \\cdot U_2 }',
+        latex: `${funcName} = \\overline{ \\overline{S_{12}} \\cdot U_3 } \\quad , \\quad S_{12} = \\overline{ U_1 \\cdot U_2 }`
       })
 
       steps.push({
-        title: 'Biểu thức đầy đủ',
-        description: 'Thay thế tín hiệu.',
-        ruleName: '',
-        ruleFormula: '',
+        title: 'Biểu thức hàm logic hoàn chỉnh (Thay thế đầy đủ các biến logic)',
+        description: 'Thay thế các tín hiệu $U_1, U_2, U_3$ vào phương trình phân tầng, ta thu được biểu thức hàm $Y$ hoàn chỉnh chỉ sử dụng cổng NAND 2 đầu vào (không ẩn sau biến trung gian, không chứa dấu ngoặc đơn thừa dưới dấu gạch ngang):',
+        ruleName: 'Biểu thức logic toàn phần NAND 2 đầu vào',
+        ruleFormula: 'Y = \\overline{ \\overline{\\overline{ \\overline{T_1} \\cdot \\overline{T_2} }} \\cdot \\overline{T_3} }',
         latex: `${funcName} = \\overline{ \\overline{\\overline{ ${decomposedTerms[0].latex} \\cdot ${decomposedTerms[1].latex} }} \\cdot ${decomposedTerms[2].latex} }`
       })
     } else {
       steps.push({
-        title: 'Phân tầng cân bằng',
-        description: '4 số hạng: chia 2 nhánh.',
-        ruleName: '',
-        ruleFormula: '',
-        latex: `${funcName} = \\overline{ \\overline{S_{12}} \\cdot \\overline{S_{34}} } \\quad ; \\quad S_{12} = \\overline{ U_1 \\cdot U_2 } \\quad ; \\quad S_{34} = \\overline{ U_3 \\cdot U_4 }`
+        title: 'Ghép tầng thu gom ngõ ra theo hệ tín hiệu trung gian',
+        description: 'Với 4 số hạng, ta chia thành 2 nhánh cân bằng: nhánh 1 tạo $S_{12}$ rồi đảo thành $\\overline{S_{12}}$; nhánh 2 tạo $S_{34}$ rồi đảo thành $\\overline{S_{34}}$; cổng NAND cuối cùng gom 2 nhánh lại tạo $Y$.',
+        ruleName: 'Cây ghép tầng 4 số hạng',
+        ruleFormula: 'Y = \\overline{ \\overline{S_{12}} \\cdot \\overline{S_{34}} }',
+        latex: `${funcName} = \\overline{ \\overline{S_{12}} \\cdot \\overline{S_{34}} } \\quad , \\quad S_{12} = \\overline{ U_1 \\cdot U_2 } \\quad , \\quad S_{34} = \\overline{ U_3 \\cdot U_4 }`
       })
 
       steps.push({
-        title: 'Biểu thức đầy đủ',
-        description: 'Thay thế các nhánh.',
-        ruleName: '',
-        ruleFormula: '',
+        title: 'Biểu thức hàm logic hoàn chỉnh (Thay thế đầy đủ các biến logic)',
+        description: 'Thay thế toàn bộ tín hiệu các nhánh vào phương trình ngõ ra, ta thu được biểu thức hàm $Y$ hoàn chỉnh chỉ sử dụng cổng NAND 2 đầu vào:',
+        ruleName: 'Biểu thức logic toàn phần NAND 2 đầu vào',
+        ruleFormula: 'Y = \\overline{ \\overline{\\overline{ \\overline{T_1} \\cdot \\overline{T_2} }} \\cdot \\overline{\\overline{ \\overline{T_3} \\cdot \\overline{T_4} }} }',
         latex: `${funcName} = \\overline{ \\overline{\\overline{ ${decomposedTerms[0].latex} \\cdot ${decomposedTerms[1].latex} }} \\cdot \\overline{\\overline{ ${decomposedTerms[2].latex} \\cdot ${decomposedTerms[3].latex} }} }`
       })
     }
@@ -259,33 +262,33 @@ function transformSopDetailed(
   })
 
   steps.push({
-    title: 'Biến đổi tích sang NOR',
-    description: 'De Morgan: tích = phủ định tổng.',
-    ruleName: '',
+    title: 'Biến đổi từng số hạng tích sang dạng phủ định tổng (Cổng NOR)',
+    description: 'Áp dụng định luật De Morgan cho từng số hạng tích: một tích bằng phủ định của một tổng các biến đảo. Do đó, mỗi số hạng tích được tạo trực tiếp bằng 1 cổng NOR.',
+    ruleName: 'Biến đổi tích sang NOR',
     ruleFormula: 'A \\cdot B = \\overline{\\overline{A} + \\overline{B}}',
-    latex: groups.map((g, i) => `${termSymbols[i]} = ${termToSopLatex(g)} = ${norTerms[i]}`).join(' \\quad ; \\quad ')
+    latex: groups.map((g, i) => `${termSymbols[i]} = ${termToSopLatex(g)} = ${norTerms[i]}`).join(' \\quad , \\quad ')
   })
 
   steps.push({
-    title: 'Thay thế vào hàm',
-    description: '',
-    ruleName: '',
-    ruleFormula: '',
+    title: 'Thay thế các số hạng NOR vào biểu thức hàm số',
+    description: 'Thay các biểu thức NOR vừa tìm được vào phương trình hàm số ban đầu.',
+    ruleName: 'Thay thế đại số',
+    ruleFormula: 'Y = T_1 + T_2 + \\dots',
     latex: `${funcName} = ${norTerms.join(' + ')}`
   })
 
   if (targetGate === 'nor_n') {
     steps.push({
-      title: 'Tầng 2 NOR',
-      description: 'Phủ định 2 lần: NOR thu gom.',
-      ruleName: '',
-      ruleFormula: '',
+      title: 'Phủ định 2 lần để tạo cổng NOR thu gom ngõ ra',
+      description: 'Lấy phủ định 2 lần toàn bộ biểu thức: cổng NOR ở tầng 2 thực hiện phép NOR giữa các số hạng, sau đó qua cổng NOR chập 2 chân vào (cổng đảo) để cho ra kết quả hàm $Y$.',
+      ruleName: 'Tầng thu gom NOR N đầu vào',
+      ruleFormula: 'Y = \\overline{ \\overline{ \\sum T_i } } = \\text{NOT}(\\text{NOR}(T_1, T_2, \\dots))',
       latex: `${funcName} = \\overline{ \\overline{ ${norTerms.join(' + ')} } }`
     })
     return steps
   }
 
-  const decomposedNorTerms: { original: string; latex: string; litCount: number }[] = []
+  const decomposedNorTerms: { original: string; latex: string; litCount: number; explanation: string }[] = []
   let hasMultiTerm = false
 
   groups.forEach((g, idx) => {
@@ -296,7 +299,8 @@ function transformSopDetailed(
       decomposedNorTerms.push({
         original: orig,
         latex: orig,
-        litCount
+        litCount,
+        explanation: `Số hạng $T_{${idx + 1}}$ có ${litCount} biến, dùng trực tiếp 1 cổng NOR 2 đầu vào.`
       })
     } else if (litCount === 3) {
       hasMultiTerm = true
@@ -308,7 +312,8 @@ function transformSopDetailed(
       decomposedNorTerms.push({
         original: orig,
         latex: decomp,
-        litCount
+        litCount,
+        explanation: `Số hạng $T_{${idx + 1}}$ có 3 biến: đưa 2 biến đảo đầu ($${l0}$, $${l1}$) vào cổng NOR-2 thứ nhất, qua cổng đảo chập chân, rồi đưa cùng biến đảo thứ ba $${l2}$ vào cổng NOR-2 kế tiếp.`
       })
     } else {
       hasMultiTerm = true
@@ -322,67 +327,68 @@ function transformSopDetailed(
       decomposedNorTerms.push({
         original: orig,
         latex: decomp,
-        litCount
+        litCount,
+        explanation: `Số hạng $T_{${idx + 1}}$ có 4 biến: chia thành 2 cặp qua 2 cổng NOR-2 và 2 cổng đảo chập chân, rồi gom lại qua 1 cổng NOR-2.`
       })
     }
   })
 
   if (hasMultiTerm) {
     steps.push({
-      title: 'Tách số hạng nhiều biến về NOR 2 đầu vào',
-      description: 'Phân tích ≥3 biến.',
-      ruleName: '',
+      title: 'Tách các số hạng có từ 3 biến về cổng NOR 2 đầu vào',
+      description: decomposedNorTerms.filter((d) => d.litCount > 2).map((d) => d.explanation).join(' '),
+      ruleName: 'Phân tích tổng nhiều biến bằng cổng NOR 2 đầu vào',
       ruleFormula: '\\overline{A + B + C} = \\overline{ \\overline{\\overline{A + B}} + C }',
-      latex: decomposedNorTerms.map((d) => d.latex).join(' \\quad ; \\quad ')
+      latex: decomposedNorTerms.map((d) => d.latex).join(' \\quad , \\quad ')
     })
   }
 
   if (decomposedNorTerms.length === 1) {
     steps.push({
-      title: 'Ngõ ra',
-      description: '1 số hạng.',
-      ruleName: '',
-      ruleFormula: '',
+      title: 'Biểu thức ngõ ra cuối cùng',
+      description: 'Hàm chỉ có 1 số hạng tích nên không cần phân tầng thu gom.',
+      ruleName: 'Cổng NOR đơn',
+      ruleFormula: 'Y = T_1',
       latex: `${funcName} = ${decomposedNorTerms[0].latex}`
     })
   } else if (decomposedNorTerms.length === 2) {
     steps.push({
-      title: 'Tầng 2',
-      description: '2 số hạng: NOR + đảo.',
-      ruleName: '',
-      ruleFormula: '',
+      title: 'Ghép tầng thu gom ngõ ra chỉ sử dụng cổng NOR 2 đầu vào',
+      description: 'Hai số hạng $T_1, T_2$ được đưa vào 1 cổng NOR 2 đầu vào. Sau đó cho qua 1 cổng NOR chập chân (cổng đảo) để thu được kết quả hàm $Y$.',
+      ruleName: 'Cổng NOR gom 2 số hạng kèm cổng đảo',
+      ruleFormula: 'Y = \\overline{ \\overline{ T_1 + T_2 } }',
       latex: `${funcName} = \\overline{ \\overline{ ${decomposedNorTerms[0].latex} + ${decomposedNorTerms[1].latex} } }`
     })
   } else if (decomposedNorTerms.length === 3) {
     steps.push({
-      title: 'Phân tầng cascade',
-      description: '3 số hạng: ghép tuần tự.',
-      ruleName: '',
-      ruleFormula: '',
-      latex: `${funcName} = \\overline{ \\overline{ S_{12} + T_3 } } \\quad ; \\quad S_{12} = \\overline{ \\overline{ T_1 + T_2 } }`
+      title: 'Ghép tầng thu gom ngõ ra theo hệ tín hiệu trung gian',
+      description: 'Gom $T_1, T_2$ qua cổng NOR thứ nhất tạo $\\overline{S_{12}}$; qua cổng đảo thành $S_{12}$; đưa $S_{12}$ cùng $T_3$ vào cổng NOR tạo $\\overline{Y}$; qua cổng đảo cuối cùng để thu được $Y$.',
+      ruleName: 'Ghép tầng tuần tự các cổng NOR 2 đầu vào',
+      ruleFormula: 'Y = \\overline{ \\overline{ S_{12} + T_3 } } \\quad , \\quad S_{12} = \\overline{ \\overline{ T_1 + T_2 } }',
+      latex: `${funcName} = \\overline{ \\overline{ S_{12} + T_3 } } \\quad , \\quad S_{12} = \\overline{ \\overline{ T_1 + T_2 } }`
     })
 
     steps.push({
-      title: 'Biểu thức đầy đủ',
-      description: 'Thay thế.',
-      ruleName: '',
-      ruleFormula: '',
+      title: 'Biểu thức hàm logic hoàn chỉnh (Thay thế đầy đủ các biến logic)',
+      description: 'Thay thế các số hạng vào phương trình phân tầng, ta thu được biểu thức hàm $Y$ hoàn chỉnh chỉ sử dụng cổng NOR 2 đầu vào:',
+      ruleName: 'Biểu thức logic toàn phần NOR 2 đầu vào',
+      ruleFormula: 'Y = \\overline{ \\overline{ \\overline{ \\overline{ T_1 + T_2 } } + T_3 } }',
       latex: `${funcName} = \\overline{ \\overline{ \\overline{ \\overline{ ${decomposedNorTerms[0].latex} + ${decomposedNorTerms[1].latex} } } + ${decomposedNorTerms[2].latex} } }`
     })
   } else {
     steps.push({
-      title: 'Phân tầng cân bằng',
-      description: '4 số hạng: chia 2 nhánh.',
-      ruleName: '',
-      ruleFormula: '',
+      title: 'Ghép tầng thu gom ngõ ra theo hệ tín hiệu trung gian',
+      description: 'Với 4 số hạng, ta chia thành 2 nhánh: nhánh 1 tạo $S_{12}$, nhánh 2 tạo $S_{34}$, sau đó gom lại qua tầng NOR kết hợp.',
+      ruleName: 'Cây ghép tầng NOR 4 số hạng',
+      ruleFormula: 'Y = \\overline{ \\overline{ S_{12} + S_{34} } }',
       latex: `${funcName} = \\overline{ \\overline{ S_{12} + S_{34} } }`
     })
 
     steps.push({
-      title: 'Biểu thức đầy đủ',
-      description: 'Thay thế.',
-      ruleName: '',
-      ruleFormula: '',
+      title: 'Biểu thức hàm logic hoàn chỉnh (Thay thế đầy đủ các biến logic)',
+      description: 'Thay thế toàn bộ tín hiệu vào phương trình ngõ ra, ta thu được biểu thức hàm $Y$ hoàn chỉnh chỉ sử dụng cổng NOR 2 đầu vào:',
+      ruleName: 'Biểu thức logic toàn phần NOR 2 đầu vào',
+      ruleFormula: 'Y = \\overline{ \\overline{ \\overline{ \\overline{ T_1 + T_2 } } + \\overline{ \\overline{ T_3 + T_4 } } } }',
       latex: `${funcName} = \\overline{ \\overline{ \\overline{ \\overline{ ${decomposedNorTerms[0].latex} + ${decomposedNorTerms[1].latex} } } + \\overline{ \\overline{ ${decomposedNorTerms[2].latex} + ${decomposedNorTerms[3].latex} } } } }`
     })
   }

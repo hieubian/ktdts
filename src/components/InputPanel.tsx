@@ -12,6 +12,7 @@ interface InputPanelProps {
   onFormChange: (form: OptimizationForm) => void
   onTargetGateChange: (gate: TargetGateType) => void
   onApplyMinterms: (terms: number[], dontCares: number[]) => void
+  onApplyExpression: (expr: string) => void
   onClear: () => void
   onSetAll: (val: CellValue) => void
 }
@@ -25,11 +26,14 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   onFormChange,
   onTargetGateChange,
   onApplyMinterms,
+  onApplyExpression,
   onClear,
   onSetAll
 }) => {
+  const [activeTab, setActiveTab] = useState<'indices' | 'expression'>('indices')
   const [termsText, setTermsText] = useState<string>('')
   const [dcText, setDcText] = useState<string>('')
+  const [expressionText, setExpressionText] = useState<string>("A'B + BC'D")
 
   const targetValue: CellValue = form === 'SOP' ? 1 : 0
 
@@ -65,7 +69,7 @@ export const InputPanel: React.FC<InputPanelProps> = ({
     if (!isDcIdentical) {
       setDcText(activeDc.join(', '))
     }
-  }, [gridValues, form, variableCount, targetValue, termsText, dcText])
+  }, [gridValues, form, variableCount, targetValue])
 
   const handleTermsInput = (newTerms: string, newDc: string) => {
     setTermsText(newTerms)
@@ -83,6 +87,11 @@ export const InputPanel: React.FC<InputPanelProps> = ({
   const handleDcBlur = () => {
     const parsedDc = parseNumberList(dcText)
     setDcText(parsedDc.join(', '))
+  }
+
+  const handleExpressionInput = (expr: string) => {
+    setExpressionText(expr)
+    onApplyExpression(expr)
   }
 
   return (
@@ -105,21 +114,21 @@ export const InputPanel: React.FC<InputPanelProps> = ({
         </div>
 
         <div className="config-item">
-          <label className="config-label">Chuẩn tắc:</label>
+          <label className="config-label">Dạng chuẩn tắc:</label>
           <div className="segmented-control">
             <button
               type="button"
               className={`segmented-btn ${form === 'SOP' ? 'active' : ''}`}
               onClick={() => onFormChange('SOP')}
             >
-              Tuyển (SOP - Sum of Products)
+              Chuẩn tắc Tuyển (∑ / SOP)
             </button>
             <button
               type="button"
               className={`segmented-btn ${form === 'POS' ? 'active' : ''}`}
               onClick={() => onFormChange('POS')}
             >
-              Hội (POS - Product of Sums)
+              Chuẩn tắc Hội (∏ / POS)
             </button>
           </div>
         </div>
@@ -131,45 +140,80 @@ export const InputPanel: React.FC<InputPanelProps> = ({
             value={targetGateType}
             onChange={(e) => onTargetGateChange(e.target.value as TargetGateType)}
           >
-            <option value="nand_2">NAND 2 đầu vào</option>
-            <option value="nor_2">NOR 2 đầu vào</option>
-            <option value="nand_n">NAND nhiều đầu vào</option>
-            <option value="nor_n">NOR nhiều đầu vào</option>
-            <option value="basic">Logic cơ bản (AND, OR, NOT)</option>
+            <option value="nand_2">Cổng NAND 2 đầu vào</option>
+            <option value="nor_2">Cổng NOR 2 đầu vào</option>
+            <option value="nand_n">Cổng NAND N đầu vào</option>
+            <option value="nor_n">Cổng NOR N đầu vào</option>
+            <option value="basic">Cổng LOGIC cơ bản (AND, OR, NOT)</option>
           </select>
         </div>
       </div>
 
       <div className="input-method-section">
-        <div className="input-fields-container">
-          <div className="grid-two-cols">
-            <div className="input-field-group">
-              <label className="field-label">
-                {form === 'SOP' ? 'Chỉ số Minterm (ô = 1):' : 'Chỉ số Maxterm (ô = 0):'}
-              </label>
-              <input
-                type="text"
-                className="text-input"
-                placeholder="Ví dụ: 1, 5, 6, 7, 8, 12"
-                value={termsText}
-                onChange={(e) => handleTermsInput(e.target.value, dcText)}
-                onBlur={handleTermsBlur}
-              />
-            </div>
+        <div className="input-modes-tabs">
+          <button
+            type="button"
+            className={`mode-tab ${activeTab === 'indices' ? 'active' : ''}`}
+            onClick={() => setActiveTab('indices')}
+          >
+            {form === 'SOP' ? 'Nhập chỉ số Minterm (∑)' : 'Nhập chỉ số Maxterm (∏)'}
+          </button>
+          <button
+            type="button"
+            className={`mode-tab ${activeTab === 'expression' ? 'active' : ''}`}
+            onClick={() => setActiveTab('expression')}
+          >
+            Nhập biểu thức Boolean
+          </button>
+        </div>
 
-            <div className="input-field-group">
-              <label className="field-label">Chỉ số tùy định (ô = X):</label>
-              <input
-                type="text"
-                className="text-input"
-                placeholder="Ví dụ: 4, 10, 14"
-                value={dcText}
-                onChange={(e) => handleTermsInput(termsText, e.target.value)}
-                onBlur={handleDcBlur}
-              />
+        {activeTab === 'indices' ? (
+          <div className="input-fields-container">
+            <div className="grid-two-cols">
+              <div className="input-field-group">
+                <label className="field-label">
+                  {form === 'SOP' ? 'Chỉ số Minterm (ô nhận giá trị 1):' : 'Chỉ số Maxterm (ô nhận giá trị 0):'}
+                </label>
+                <input
+                  type="text"
+                  className="text-input"
+                  placeholder="Ví dụ: 1, 2, 4, 5, 9, 10, 12"
+                  value={termsText}
+                  onChange={(e) => handleTermsInput(e.target.value, dcText)}
+                  onBlur={handleTermsBlur}
+                />
+              </div>
+
+              <div className="input-field-group">
+                <label className="field-label">Chỉ số tùy định d / D (ô nhận giá trị X):</label>
+                <input
+                  type="text"
+                  className="text-input"
+                  placeholder="Ví dụ: 0, 13, 14"
+                  value={dcText}
+                  onChange={(e) => handleTermsInput(termsText, e.target.value)}
+                  onBlur={handleDcBlur}
+                />
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="input-fields-container">
+            <div className="input-field-group">
+              <label className="field-label">Biểu thức đại số Boolean:</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  className="text-input flex-1"
+                  placeholder="Ví dụ: A'B + BC'D hoặc !A*B + B*!C*D"
+                  value={expressionText}
+                  onChange={(e) => handleExpressionInput(e.target.value)}
+                />
+              </div>
+              <span className="field-hint">Hỗ trợ dấu ' hoặc ! cho phép đảo; dấu + cho OR; ký tự liền kề hoặc * cho AND.</span>
+            </div>
+          </div>
+        )}
 
         <div className="input-actions-bar">
           <div className="actions-left-group">
@@ -177,22 +221,24 @@ export const InputPanel: React.FC<InputPanelProps> = ({
               type="button"
               className="action-pill-btn"
               onClick={onClear}
+              title="Đặt toàn bộ ô bằng 0"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Xóa</span>
+              <span>Xóa sạch (đặt 0)</span>
             </button>
             <button
               type="button"
               className="action-pill-btn"
               onClick={() => onSetAll(1)}
+              title="Đặt toàn bộ ô bằng 1"
             >
               <CheckCheck className="w-3.5 h-3.5" />
-              <span>Đặt 1</span>
+              <span>Gán tất cả bằng 1</span>
             </button>
           </div>
 
           <div className="actions-right-hint">
-            <span>Nhấp vào ô trên bảng: 0 ⇄ 1 ⇄ X</span>
+            <span>Có thể nhấp chuột trực tiếp vào từng ô trên bảng Karnaugh để đổi 0 ⇄ 1 ⇄ X</span>
           </div>
         </div>
       </div>

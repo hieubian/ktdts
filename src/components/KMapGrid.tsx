@@ -28,117 +28,80 @@ export const KMapGrid: React.FC<KMapGridProps> = ({
   const colBits = variableCount === 2 ? 1 : 2
 
   const cellGroupMap: Record<number, KMapGroup[]> = {}
-  groups.forEach((g) => {
-    g.cells.forEach((c) => {
+  groups.forEach(g => {
+    g.cells.forEach(c => {
       if (!cellGroupMap[c]) cellGroupMap[c] = []
       cellGroupMap[c].push(g)
     })
   })
 
-  const renderSubscriptLabel = (label: string) => {
-    const parts = label.split('_')
-    if (parts.length === 2) {
-      return (
-        <span>
-          {parts[0]}
-          <sub>{parts[1]}</sub>
-        </span>
-      )
-    }
-    return label
-  }
-
   return (
-    <div className="kmap-container">
-      <div className="kmap-table-wrapper">
-        <table className="kmap-table">
-          <thead>
-            <tr>
-              <th className="kmap-corner-header">
-                <div className="kmap-diagonal-header">
-                  <span className="col-var-label">{colVars.join('')}</span>
-                  <span className="diagonal-slash">/</span>
-                  <span className="row-var-label">{rowVars.join('')}</span>
-                </div>
-              </th>
-              {colGrays.map((val, colIdx) => (
-                <th key={colIdx} className="kmap-header-cell">
-                  {formatGray(val, colBits)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rowGrays.map((rVal, rowIdx) => (
-              <tr key={rowIdx}>
-                <th className="kmap-header-cell kmap-row-header">
-                  {formatGray(rVal, rowBits)}
-                </th>
-                {colGrays.map((_, colIdx) => {
-                  const m = cellToMinterm(variableCount, rowIdx, colIdx)
-                  const cellVal = gridValues[m] ?? 0
-                  const coveringGroups = cellGroupMap[m] || []
-                  const isHovered = hoveredGroup && coveringGroups.some((g) => g.id === hoveredGroup)
-                  const primaryGroup = coveringGroups[0]
-
-                  let cellClass = 'kmap-cell'
-                  if (cellVal === 1) cellClass += ' cell-one'
-                  else if (cellVal === 'd') cellClass += ' cell-dc'
-                  else cellClass += ' cell-zero'
-
-                  if (isHovered) cellClass += ' cell-hovered-group'
-
-                  const inlineStyle: React.CSSProperties = {}
-                  if (coveringGroups.length > 0) {
-                    inlineStyle.borderColor = isHovered ? '#d97706' : primaryGroup.color
-                    inlineStyle.backgroundColor = isHovered
-                      ? 'rgba(217, 119, 6, 0.08)'
-                      : `${primaryGroup.color}10`
-                  }
-
-                  return (
-                    <td
-                      key={colIdx}
-                      className={cellClass}
-                      style={inlineStyle}
-                      onClick={() => onCellToggle(m)}
-                      title={`Minterm ${m} (${formatGray(m, variableCount)}): Đổi 0 ➔ 1 ➔ X`}
-                    >
-                      <span className="cell-index">{m}</span>
-                      <span className="cell-value">
-                        {cellVal === 'd' ? 'X' : cellVal}
-                      </span>
-                      {coveringGroups.length > 0 && (
-                        <div className="cell-group-tags">
-                          {coveringGroups.map((g) => (
-                            <span
-                              key={g.id}
-                              className="cell-tag"
-                              style={{ backgroundColor: g.color }}
-                              onMouseEnter={(e) => {
-                                e.stopPropagation()
-                                onGroupHover(g.id)
-                              }}
-                              onMouseLeave={() => onGroupHover(null)}
-                            >
-                              {renderSubscriptLabel(g.label)}
-                            </span>
-                          ))}
-                        </div>
-                      )}
-                    </td>
-                  )
-                })}
-              </tr>
+    <div className="kmap-wrapper">
+      <table className="kmap-table">
+        <thead>
+          <tr>
+            <th className="kmap-corner">
+              <span className="diag-top">{colVars.join('')}</span>
+              <span className="diag-line" />
+              <span className="diag-bot">{rowVars.join('')}</span>
+            </th>
+            {colGrays.map((val, colIdx) => (
+              <th key={colIdx}>{formatGray(val, colBits)}</th>
             ))}
-          </tbody>
-        </table>
-      </div>
+          </tr>
+        </thead>
+        <tbody>
+          {rowGrays.map((rVal, rowIdx) => (
+            <tr key={rowIdx}>
+              <th>{formatGray(rVal, rowBits)}</th>
+              {colGrays.map((_, colIdx) => {
+                const m = cellToMinterm(variableCount, rowIdx, colIdx)
+                const cellVal = gridValues[m] ?? 0
+                const coveringGroups = cellGroupMap[m] || []
+                const isHovered = hoveredGroup && coveringGroups.some(g => g.id === hoveredGroup)
+                const primaryGroup = coveringGroups[0]
 
-      <div className="kmap-legend">
-        <span className="legend-hint">
-          {form === 'SOP' ? 'Đang tối ưu chuẩn tắc Tuyển (gom các ô 1 và X)' : 'Đang tối ưu chuẩn tắc Hội (gom các ô 0 và X)'}
-        </span>
+                const valClass = cellVal === 1 ? 'val-1' : cellVal === 'd' ? 'val-d' : 'val-0'
+
+                const style: React.CSSProperties = {}
+                if (coveringGroups.length > 0) {
+                  style.borderColor = isHovered ? '#d97706' : primaryGroup.color
+                  style.backgroundColor = isHovered
+                    ? 'rgba(217, 119, 6, 0.1)'
+                    : `${primaryGroup.color}10`
+                  if (isHovered) style.borderWidth = '3px'
+                }
+
+                return (
+                  <td key={colIdx}
+                    className={`kmap-cell ${valClass} ${isHovered ? 'cell-hovered' : ''}`}
+                    style={style}
+                    onClick={() => onCellToggle(m)}
+                    title={`Minterm ${m}: Click để đổi 0→1→X→0`}
+                  >
+                    <span className="cell-idx">{m}</span>
+                    <span className="cell-val">{cellVal === 'd' ? 'X' : cellVal}</span>
+                    {coveringGroups.length > 0 && (
+                      <div className="cell-tags">
+                        {coveringGroups.map(g => (
+                          <span key={g.id} className="cell-tag"
+                            style={{ backgroundColor: g.color }}
+                            onMouseEnter={e => { e.stopPropagation(); onGroupHover(g.id) }}
+                            onMouseLeave={() => onGroupHover(null)}>
+                            {g.label.replace('_', '')}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </td>
+                )
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div className="kmap-hint">
+        {form === 'SOP' ? 'Chuẩn tắc Tuyển (gom ô 1 và X)' : 'Chuẩn tắc Hội (gom ô 0 và X)'}
       </div>
     </div>
   )
