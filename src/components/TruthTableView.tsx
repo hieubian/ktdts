@@ -1,6 +1,7 @@
 import React from 'react'
 import type { CellValue, OptimizationForm, VariableCount } from '../types'
 import { getVariableNames } from '../utils/kmapSolver'
+import { Table } from 'lucide-react'
 import { KaTeXView } from './KaTeXView'
 
 interface TruthTableViewProps {
@@ -36,44 +37,59 @@ export const TruthTableView: React.FC<TruthTableViewProps> = ({
   }
 
   return (
-    <div className="truth-table-wrapper">
-      <p className="hint-text" style={{ marginBottom: 'var(--space-sm)' }}>
-        💡 Click vào ô Y để chỉnh sửa giá trị (0 → 1 → X → 0)
-      </p>
-      <table className="truth-table">
-        <thead>
-          <tr>
-            <th>#</th>
-            {variables.map(v => <th key={v} className="col-input">{v}</th>)}
-            <th>{form === 'SOP' ? 'Minterm' : 'Maxterm'}</th>
-            <th className="col-output">Y</th>
-          </tr>
-        </thead>
-        <tbody>
-          {Array.from({ length: totalRows }, (_, m) => {
-            const val = gridValues[m] ?? 0
-            const valClass = val === 1 ? 'val-1' : val === 'd' ? 'val-x' : 'val-0'
+    <div className="truth-table-card">
+      <div className="truth-table-header">
+        <div className="flex items-center gap-2">
+          <Table className="w-5 h-5 text-indigo-500" />
+          <h3 className="font-semibold text-slate-800 dark:text-slate-100">Bảng Chân Lý Hoàn Chỉnh (Truth Table)</h3>
+        </div>
+        <span className="text-xs text-slate-500 dark:text-slate-400">
+          Nhấp vào ô kết quả Y để chỉnh sửa trực tiếp giá trị
+        </span>
+      </div>
 
-            return (
-              <tr key={m}>
-                <td style={{ color: 'var(--text-tertiary)', fontSize: '11px' }}>{m}</td>
-                {Array.from({ length: variableCount }, (_, bitIdx) => {
-                  const bit = (m >> (variableCount - 1 - bitIdx)) & 1
-                  return <td key={bitIdx} className="col-input">{bit}</td>
-                })}
-                <td style={{ fontSize: '12px' }}>
-                  <KaTeXView math={getAlgebraicTerm(m)} />
-                </td>
-                <td className={`col-output ${valClass}`}
-                  onClick={() => onCellToggle(m)}
-                  style={{ cursor: 'pointer', fontWeight: 700 }}>
-                  {val === 'd' ? 'X' : val}
-                </td>
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
+      <div className="truth-table-scroll">
+        <table className="truth-table">
+          <thead>
+            <tr>
+              <th>TT</th>
+              {variables.map((v) => (
+                <th key={v}>{v}</th>
+              ))}
+              <th>{form === 'SOP' ? 'Minterm Đại Số' : 'Maxterm Đại Số'}</th>
+              <th className="output-header">Đầu ra Y</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: totalRows }, (_, m) => {
+              const val = gridValues[m] ?? 0
+
+              let valBadgeClass = 'tt-val-badge'
+              if (val === 1) valBadgeClass += ' tt-one'
+              else if (val === 'd') valBadgeClass += ' tt-dc'
+              else valBadgeClass += ' tt-zero'
+
+              return (
+                <tr key={m}>
+                  <td className="tt-idx">{m + 1}</td>
+                  {Array.from({ length: variableCount }, (_, bitIdx) => {
+                    const bit = (m >> (variableCount - 1 - bitIdx)) & 1
+                    return <td key={bitIdx} className="tt-bit">{bit}</td>
+                  })}
+                  <td className="tt-term">
+                    <KaTeXView math={getAlgebraicTerm(m)} />
+                  </td>
+                  <td className="tt-output-cell" onClick={() => onCellToggle(m)}>
+                    <span className={valBadgeClass}>
+                      {val === 'd' ? 'X' : val}
+                    </span>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

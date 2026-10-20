@@ -23,7 +23,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header className="navbar-container no-print">
       <div className="navbar-content">
         <div className="brand-group">
-          <span className="brand-title">KarnaughResolve</span>
+          <span className="brand-title">hghktdts</span>
           <div className="problem-segmented-control">
             <button
               type="button"
