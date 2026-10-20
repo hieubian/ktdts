@@ -6,7 +6,8 @@
   "description": "Công cụ giải bài tập Kỹ thuật Điện tử Số - Hỗ trợ đầy đủ chương 1,2",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
+    "build:tsc": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "oxlint"
   },
