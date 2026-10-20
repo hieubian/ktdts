@@ -11,9 +11,7 @@ export const GROUP_COLORS = [
   '#7c3aed',
   '#0891b2',
   '#ea580c',
-  '#4f46e5',
-  '#dc2626',
-  '#16a34a'
+  '#4f46e5'
 ]
 
 export function getVariableNames(count: VariableCount): string[] {
@@ -22,12 +20,7 @@ export function getVariableNames(count: VariableCount): string[] {
   return ['A', 'B', 'C', 'D']
 }
 
-export function getGridDimensions(count: VariableCount): {
-  rowCount: number
-  colCount: number
-  rowVars: string[]
-  colVars: string[]
-} {
+export function getGridDimensions(count: VariableCount): { rowCount: number; colCount: number; rowVars: string[]; colVars: string[] } {
   if (count === 2) {
     return { rowCount: 2, colCount: 2, rowVars: ['A'], colVars: ['B'] }
   }
@@ -94,10 +87,7 @@ export function parseNumberList(input: string): number[] {
   return Array.from(new Set(matches.map(Number))).sort((a, b) => a - b)
 }
 
-export function parseExpression(expr: string, count: VariableCount): {
-  minterms: number[]
-  dontCares: number[]
-} {
+export function parseExpression(expr: string, count: VariableCount): { minterms: number[]; dontCares: number[] } {
   const clean = expr.replace(/\s+/g, '').toUpperCase()
   if (!clean) return { minterms: [], dontCares: [] }
 
@@ -196,7 +186,7 @@ function findPrimeImplicants(
               const m = cellToMinterm(count, row, col)
               cells.push(m)
               const v = grid[m]
-              if (v !== targetVal && v !== 'd' && v !== 'X') {
+              if (v !== targetVal && v !== 'd') {
                 isValid = false
                 break
               }
@@ -271,7 +261,10 @@ function pruneRedundant(groups: RectGroup[], targetCells: number[]): RectGroup[]
   return result
 }
 
-function selectCover(targetCells: number[], primeImplicants: RectGroup[]): RectGroup[] {
+function selectCover(
+  targetCells: number[],
+  primeImplicants: RectGroup[]
+): RectGroup[] {
   if (targetCells.length === 0) return []
   const targetSet = new Set(targetCells)
   const validPrimes = primeImplicants.filter((p) => p.cells.some((c) => targetSet.has(c)))
@@ -355,13 +348,7 @@ function deriveTerm(
   count: VariableCount,
   cells: number[],
   form: OptimizationForm
-): {
-  literals: Literal[]
-  eliminated: string[]
-  kept: string[]
-  latex: string
-  raw: string
-} {
+): { literals: Literal[]; eliminated: string[]; kept: string[]; latex: string; raw: string } {
   const variables = getVariableNames(count)
   const total = cells.length
 
@@ -408,14 +395,10 @@ function deriveTerm(
     latex = form === 'SOP' ? '1' : '0'
     raw = latex
   } else if (form === 'SOP') {
-    latex = literals
-      .map((l) => (l.inverted ? `\\overline{${l.variable}}` : l.variable))
-      .join('.')
+    latex = literals.map((l) => (l.inverted ? `\\overline{${l.variable}}` : l.variable)).join('.')
     raw = literals.map((l) => (l.inverted ? `~${l.variable}` : l.variable)).join('')
   } else {
-    latex = `(${literals
-      .map((l) => (l.inverted ? `\\overline{${l.variable}}` : l.variable))
-      .join(' + ')})`
+    latex = `(${literals.map((l) => (l.inverted ? `\\overline{${l.variable}}` : l.variable)).join(' + ')})`
     raw = `(${literals.map((l) => (l.inverted ? `~${l.variable}` : l.variable)).join('+')})`
   }
 
@@ -426,11 +409,7 @@ export function solveKMap(
   count: VariableCount,
   grid: Record<number, CellValue>,
   form: OptimizationForm
-): {
-  groups: KMapGroup[]
-  simplifiedLatex: string
-  simplifiedPlain: string
-} {
+): { groups: KMapGroup[]; simplifiedLatex: string; simplifiedPlain: string } {
   const totalCells = 1 << count
   const targetVal: CellValue = form === 'SOP' ? 1 : 0
 
@@ -450,9 +429,7 @@ export function solveKMap(
     }
   }
 
-  const allAreTargetOrDC = Object.values(grid).every(
-    (v) => v === targetVal || v === 'd' || v === 'X'
-  )
+  const allAreTargetOrDC = Object.values(grid).every((v) => v === targetVal || v === 'd')
   if (allAreTargetOrDC && targetCells.length > 0) {
     const fullGroup: KMapGroup = {
       id: 'group-0',

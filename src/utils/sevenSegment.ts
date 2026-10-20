@@ -1,4 +1,6 @@
-import type { LedPolarity, SegmentName } from '../types'
+import type { LedPolarity } from '../types'
+
+export type SegmentName = 'a' | 'b' | 'c' | 'd' | 'e' | 'f' | 'g'
 
 export const SEGMENT_MAP: Record<string, SegmentName[]> = {
   '0': ['a', 'b', 'c', 'd', 'e', 'f'],
@@ -24,51 +26,75 @@ export const SEGMENT_MAP: Record<string, SegmentName[]> = {
   'F': ['a', 'e', 'f', 'g'],
   'H': ['b', 'c', 'e', 'f', 'g'],
   'h': ['c', 'e', 'f', 'g'],
-  'P': ['a', 'b', 'e', 'f', 'g']
+  'I': ['b', 'c'],
+  'i': ['c'],
+  'J': ['b', 'c', 'd'],
+  'L': ['d', 'e', 'f'],
+  'P': ['a', 'b', 'e', 'f', 'g'],
+  'U': ['b', 'c', 'd', 'e', 'f'],
+  'u': ['c', 'd', 'e'],
+  'o': ['c', 'd', 'e', 'g'],
+  'O': ['a', 'b', 'c', 'd', 'e', 'f'],
+  'n': ['c', 'e', 'g'],
+  'r': ['e', 'g'],
+  't': ['d', 'e', 'f', 'g'],
+  'y': ['b', 'c', 'd', 'f', 'g'],
+  '°': ['a', 'b', 'f', 'g'],
+  '-': ['g'],
+  '=': ['d', 'g'],
+  '_': ['d'],
+  '"': ['b', 'f'],
+  '≡': ['a', 'd', 'g'],
+  '[': ['a', 'd', 'e', 'f'],
+  ']': ['a', 'b', 'c', 'd']
 }
 
-// Preset dạng bài phổ biến
+export const DIGIT_CHARS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+export const LETTER_CHARS = ['A', 'b', 'C', 'c', 'd', 'E', 'F', 'H', 'h', 'L', 'P', 'U', 'u', 'o', 'n', 'r', 'J', 't', 'y']
+export const SYMBOL_CHARS = ['°', '-', '=', '_', '"', '≡', '[', ']']
+
 export interface SevenSegPreset {
   label: string
-  chars: string
-  segments: SegmentName[]
-  polarity: LedPolarity
-  description: string
+  chars: string[]
+  segments?: SegmentName[]
+  polarity?: LedPolarity
 }
 
-export const COMMON_PRESETS: SevenSegPreset[] = [
+export const COMMON_7SEG_PRESETS: SevenSegPreset[] = [
   {
-    label: 'Câu 8: LED Catốt chung (a, d, g)',
-    chars: '56789AEdPH',
-    segments: ['a', 'd', 'g'],
-    polarity: 'cathode_common',
-    description: 'Hiển thị các ký tự 5, 6, 7, 8, 9, A, E, d, P, H trên thanh a, d, g'
+    label: '5, 6, 7, 8, 9, A, E, d, P, H (Đề cương C6: b, c, d)',
+    chars: ['5', '6', '7', '8', '9', 'A', 'E', 'd', 'P', 'H'],
+    segments: ['b', 'c', 'd'],
+    polarity: 'cathode_common'
   },
   {
-    label: 'Câu 9: LED Catốt chung (a, b, c)',
-    chars: '123456789A',
-    segments: ['a', 'b', 'c'],
-    polarity: 'cathode_common',
-    description: 'Hiển thị các chữ số 1-9 và chữ A trên thanh a, b, c'
-  },
-  {
-    label: 'Câu 9 (cải tiến): LED Anốt chung (e, f, g)',
-    chars: '456789AbC',
+    label: '4, 5, 6, 7, 8, 9, A, b, C (Bài tập C8: e, f, g - Anot chung)',
+    chars: ['4', '5', '6', '7', '8', '9', 'A', 'b', 'C'],
     segments: ['e', 'f', 'g'],
-    polarity: 'anode_common',
-    description: 'Hiển thị 4, 5, 6, 7, 8, 9, A, b, C trên thanh e, f, g (Anốt chung)'
+    polarity: 'anode_common'
   },
   {
-    label: 'BCD 0-9: Tất cả 7 thanh',
-    chars: '0123456789',
-    segments: ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
-    polarity: 'cathode_common',
-    description: 'Decoder BCD sang LED 7 đoạn đầy đủ'
+    label: '1, 2, 3, 4, 5, 6, 7, 8, 9, A (Bài tập C9: a, b, c)',
+    chars: ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A'],
+    segments: ['a', 'b', 'c'],
+    polarity: 'cathode_common'
+  },
+  {
+    label: '5, 6, 7, 8, 9, A, E, d, P, H (Thanh a, d, g)',
+    chars: ['5', '6', '7', '8', '9', 'A', 'E', 'd', 'P', 'H'],
+    segments: ['a', 'd', 'g'],
+    polarity: 'cathode_common'
+  },
+  {
+    label: '0, 1, 2, 3, 4, 5, 6, 7, 8, 9 (Slide 5)',
+    chars: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'],
+    segments: ['a', 'd', 'g'],
+    polarity: 'cathode_common'
   }
 ]
 
-export function getSegmentActives(char: string): Record<SegmentName, boolean> {
-  const activeList = SEGMENT_MAP[char] ?? SEGMENT_MAP[char.toUpperCase()] ?? []
+export function getSegmentActives(char: string, customSegments?: SegmentName[]): Record<SegmentName, boolean> {
+  const activeList = customSegments ?? SEGMENT_MAP[char] ?? SEGMENT_MAP[char.toUpperCase()] ?? []
   return {
     a: activeList.includes('a'),
     b: activeList.includes('b'),
@@ -87,8 +113,12 @@ export function getSegmentBitValue(isActive: boolean, polarity: LedPolarity): nu
   return isActive ? 0 : 1
 }
 
-export function parseSevenSegmentBits(char: string, polarity: LedPolarity): Record<SegmentName, number> {
-  const actives = getSegmentActives(char)
+export function parseSevenSegmentBits(
+  char: string,
+  polarity: LedPolarity,
+  customSegments?: SegmentName[]
+): Record<SegmentName, number> {
+  const actives = getSegmentActives(char, customSegments)
   return {
     a: getSegmentBitValue(actives.a, polarity),
     b: getSegmentBitValue(actives.b, polarity),
