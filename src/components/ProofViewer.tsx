@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import type { TransformationStep } from '../types'
 import { KaTeXView } from './KaTeXView'
 import { FormattedMathText } from './FormattedMathText'
-import { Check, ChevronDown, ChevronUp, Copy, HelpCircle } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, Copy } from 'lucide-react'
 
 interface ProofViewerProps {
   steps: TransformationStep[]

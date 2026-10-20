@@ -91,7 +91,7 @@ export const ExamReportView: React.FC<ExamReportViewProps> = ({
               </span>
             </div>
             <div className="exam-groups-list">
-              {groups.map((g, idx) => (
+              {groups.map((g) => (
                 <div
                   key={g.id}
                   className={`exam-group-row ${hoveredGroup === g.id ? 'active-hover' : ''}`}
