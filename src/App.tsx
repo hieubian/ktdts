@@ -2,10 +2,7 @@ import React from 'react'
 import './App.css'
 import { Navbar } from './components/Navbar'
 import { HelpModal } from './components/HelpModal'
-import { ProblemType1Page } from './pages/ProblemType1Page'
-import { ProblemType2Page } from './pages/ProblemType2Page'
-import { ProblemType3Page } from './pages/ProblemType3Page'
-import { ProblemType4Page } from './pages/ProblemType4Page'
+import { ProblemType1Page, ProblemType2Page, ProblemType3Page, ProblemType4Page } from './pages'
 
 export type ProblemType = 'type1' | 'type2' | 'type3' | 'type4'
 
